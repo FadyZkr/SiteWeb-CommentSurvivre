@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comment survivre - Simulation</title>
+    <style>
+        @font-face {
+            font-family: 'Bristol';
+            src: url('fonts/Bristol.otf') format('opentype');
+            font-display: swap;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            color: #fff;
+            font-family: 'Bristol', 'Montserrat', sans-serif;
+            background: #000;
+            overflow-x: hidden;
+            height: 100vh;
+        }
+
+        .loader {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font: bold 30px monospace;
+            white-space: pre;
+            height: 1.2em;
+            overflow: hidden;
+            opacity: 1;
+            transition: opacity 0.8s ease-out;
+        }
+
+        .loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loader:before {
+            content: "Loading...\A⌰oading...\A⌰⍜ading...\A⌰⍜⏃ding...\A⌰⍜⏃⎅ing...\A⌰⍜⏃⎅⟟ng...\A⌰⍜⏃⎅⟟⋏g...\A⌰⍜⏃⎅⟟⋏☌...\A⌰⍜⏃⎅⟟⋏☌⟒..\A⌰⍜⏃⎅⟟⋏☌⟒⏁.\A⌰⍜⏃⎅⟟⋏☌⟒⏁⋔";
+            display: inline-block;
+            animation: l39 1s infinite steps(11) alternate;
+        }
+
+        @keyframes l39 { 100% { transform: translateY(-100%); } }
+        #main-content {
+            display: none;
+            height: 200vh;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(#000, transparent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            transition: opacity 0.3s;
+        }
+
+        header.hidden { opacity: 0; pointer-events: none; }
+
+        nav ul {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 18px;
+            text-transform: uppercase;
+        }
+
+        nav a:hover { color: #808080; }
+
+        #animation-section {
+            position: fixed;
+            width: 100%;
+            height: 100vh;
+            display: none;
+            perspective: 1000px;
+        }
+
+        .animation-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .background-layer, .foreground-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: center/cover no-repeat;
+            transition: transform 0.5s ease-out, filter 0.5s ease-out;
+        }
+
+        .background-layer {
+            background-image: url('Images/image9.png');
+            filter: brightness(100%);
+        }
+
+        .foreground-layer {
+            background-image: url('Images/image8.png');
+            z-index: 1;
+            filter: brightness(100%);
+        }
+
+        .background-layer.darkened {
+            filter: brightness(20%);
+        }
+
+        .foreground-layer.darkened {
+            filter: brightness(60%);
+        }
+
+        .title-container, .description-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 80%;
+            max-width: 800px;
+        }
+
+        .initial-text {
+            font-size: 5em;
+            transition: all 0.5s ease-out;
+        }
+
+        .description-text {
+            font-size: 1.5em;
+            opacity: 0;
+            transition: all 0.5s ease-out;
+            line-height: 1.5;
+        }
+
+        .content-wrapper {
+            position: absolute;
+            top: 100vh;
+            width: 100%;
+            height: 100vh;
+            background: #000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .content-wrapper.visible {
+            display: flex;
+        }
+
+        .bande {
+            padding: 20px;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease-out;
+            width: 100%;
+            text-align: center;
+            filter: blur(5px);
+        }
+
+        .bande.visible {
+            opacity: 1;
+            transform: translateY(0);
+            filter: blur(0);
+        }
+
+        .bande-text {
+            font-size: 80px;
+            color: #fff;
+            text-decoration: none;
+            text-transform: uppercase;
+            transition: color 0.3s;
+        }
+
+        .bande-text:hover { color: #808080; }
+
+        footer {
+            padding: 20px;
+            text-align: center;
+            font-size: 20px;
+            width: 100%;
+        }
+
+        /* Styles pour la section téléchargement */
+        #download-section {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: #18181B;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            position: relative; /* Pour positionner le bouton */
+        }
+
+        #download-section.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+.back-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    height: 3em;
+    width: 100px;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--card-background-color);
+    border-radius: 3px;
+    letter-spacing: 1px;
+    transition: all 0.25s ease;
+    cursor: pointer;
+    border: 1px solid var(--card-border-color);
+    font-family: 'Bristol', 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--card-label-color);
+    box-shadow: 0px var(--card-box-shadow-1-y) var(--card-box-shadow-1-blur) var(--card-box-shadow-1), 
+                0px var(--card-box-shadow-2-y) var(--card-box-shadow-2-blur) var(--card-box-shadow-2);
+}
+
+.back-button > svg {
+    margin-right: 5px;
+    margin-left: 5px;
+    font-size: 20px;
+    transition: all 0.4s ease-in;
+    color: #ffffff;
+}
+
+.back-button:hover {
+    box-shadow: 0px var(--card-hover-box-shadow-1-y) var(--card-hover-box-shadow-1-blur) var(--card-hover-box-shadow-1), 
+                0px var(--card-hover-box-shadow-2-y) var(--card-hover-box-shadow-2-blur) var(--card-hover-box-shadow-2), 
+                0 0 0 1px var(--card-hover-border-color);
+    transform: translateY(-2px);
+}
+
+.back-button:hover > svg {
+    font-size: 1.2em;
+    transform: translateX(-5px);
+}
+
+        /* Styles des cartes */
+        body {
+            --background-color: #18181B;
+            --text-color: #A1A1AA;
+            --card-background-color: rgba(255, 255, 255, .015);
+            --card-border-color: rgba(255, 255, 255, 0.1);
+            --card-box-shadow-1: rgba(0, 0, 0, 0.05);
+            --card-box-shadow-1-y: 3px;
+            --card-box-shadow-1-blur: 6px;
+            --card-box-shadow-2: rgba(0, 0, 0, 0.1);
+            --card-box-shadow-2-y: 8px;
+            --card-box-shadow-2-blur: 15px;
+            --card-label-color: #FFFFFF;
+            --card-icon-color: #D4D4D8;
+            --card-icon-background-color: rgba(255, 255, 255, 0.08);
+            --card-icon-border-color: rgba(255, 255, 255, 0.12);
+            --card-shine-opacity: .1;
+            --card-shine-gradient: conic-gradient(from 205deg at 50% 50%, rgba(16, 185, 129, 0) 0deg, #10B981 25deg, rgba(52, 211, 153, 0.18) 295deg, rgba(16, 185, 129, 0) 360deg);
+            --card-line-color: #2A2B2C;
+            --card-tile-color: rgba(16, 185, 129, 0.05);
+            --card-hover-border-color: rgba(255, 255, 255, 0.2);
+            --card-hover-box-shadow-1: rgba(0, 0, 0, 0.04);
+            --card-hover-box-shadow-1-y: 5px;
+            --card-hover-box-shadow-1-blur: 10px;
+            --card-hover-box-shadow-2: rgba(0, 0, 0, 0.3);
+            --card-hover-box-shadow-2-y: 15px;
+            --card-hover-box-shadow-2-blur: 25px;
+            --card-hover-icon-color: #34D399;
+            --card-hover-icon-background-color: rgba(52, 211, 153, 0.1);
+            --card-hover-icon-border-color: rgba(52, 211, 153, 0.2);
+            --blur-opacity: .01;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 240px);
+            grid-gap: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card {
+            background-color: var(--background-color);
+            box-shadow: 0px var(--card-box-shadow-1-y) var(--card-box-shadow-1-blur) var(--card-box-shadow-1), 0px var(--card-box-shadow-2-y) var(--card-box-shadow-2-blur) var(--card-box-shadow-2), 0 0 0 1px var(--card-border-color);
+            padding: 56px 16px 16px 16px;
+            border-radius: 15px;
+            cursor: pointer;
+            position: relative;
+            transition: box-shadow .25s;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 15px;
+            background-color: var(--card-background-color);
+        }
+
+        .card .icon {
+            z-index: 2;
+            position: relative;
+            display: table;
+            padding: 8px;
+            margin: 0 auto;
+        }
+
+        .card .icon::after {
+            content: '';
+            position: absolute;
+            inset: 4.5px;
+            border-radius: 50%;
+            background-color: var(--card-icon-background-color);
+            border: 1px solid var(--card-icon-border-color);
+            backdrop-filter: blur(2px);
+            transition: background-color .25s, border-color .25s;
+        }
+
+        .card .icon svg {
+            position: relative;
+            z-index: 1;
+            display: block;
+            width: 24px;
+            height: 24px;
+            transform: translateZ(0);
+            color: var(--card-icon-color);
+            transition: color .25s;
+        }
+
+        .card h4 {
+            z-index: 2;
+            position: relative;
+            margin: 12px 0 4px 0;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 2;
+            color: var(--card-label-color);
+            text-align: center;
+        }
+
+        .card p {
+            z-index: 2;
+            position: relative;
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .card .shine {
+            border-radius: inherit;
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity .5s;
+        }
+
+        .card .shine:before {
+            content: '';
+            width: 150%;
+            padding-bottom: 150%;
+            border-radius: 50%;
+            position: absolute;
+            left: 50%;
+            bottom: 55%;
+            filter: blur(35px);
+            opacity: var(--card-shine-opacity);
+            transform: translateX(-50%);
+            background-image: var(--card-shine-gradient);
+        }
+
+        .card .background {
+            border-radius: inherit;
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            -webkit-mask-image: radial-gradient(circle at 60% 5%, black 0%, black 15%, transparent 60%);
+            mask-image: radial-gradient(circle at 60% 5%, black 0%, black 15%, transparent 60%);
+        }
+
+        .card .background .tiles {
+            opacity: 0;
+            transition: opacity .25s;
+        }
+
+        .card .background .tile {
+            position: absolute;
+            background-color: var(--card-tile-color);
+            animation-duration: 8s;
+            animation-iteration-count: infinite;
+            opacity: 0;
+        }
+
+        .card .background .tile.tile-1 { top: 0; left: 0; height: 10%; width: 22.5%; }
+        .card .background .tile.tile-2 { top: 0; left: 22.5%; height: 10%; width: 27.5%; }
+        .card .background .tile.tile-3 { top: 0; left: 50%; height: 10%; width: 27.5%; }
+        .card .background .tile.tile-4 { top: 0; left: 77.5%; height: 10%; width: 22.5%; }
+        .card .background .tile.tile-5 { top: 10%; left: 0; height: 22.5%; width: 22.5%; }
+        .card .background .tile.tile-6 { top: 10%; left: 22.5%; height: 22.5%; width: 27.5%; }
+        .card .background .tile.tile-7 { top: 10%; left: 50%; height: 22.5%; width: 27.5%; }
+        .card .background .tile.tile-8 { top: 10%; left: 77.5%; height: 22.5%; width: 22.5%; }
+        .card .background .tile.tile-9 { top: 32.5%; left: 50%; height: 22.5%; width: 27.5%; }
+        .card .background .tile.tile-10 { top: 32.5%; left: 77.5%; height: 22.5%; width: 22.5%; }
+
+        @keyframes tile {
+            0%, 12.5%, 100% { opacity: 1; }
+            25%, 82.5% { opacity: 0; }
+        }
+
+        .card:hover {
+            box-shadow: 0px 3px 6px var(--card-hover-box-shadow-1), 0px var(--card-hover-box-shadow-2-y) var(--card-hover-box-shadow-2-blur) var(--card-hover-box-shadow-2), 0 0 0 1px var(--card-hover-border-color);
+        }
+
+        .card:hover .icon::after {
+            background-color: var(--card-hover-icon-background-color);
+            border-color: var(--card-hover-icon-border-color);
+        }
+
+        .card:hover .icon svg {
+            color: var(--card-hover-icon-color);
+        }
+
+        .card:hover .shine {
+            opacity: 1;
+            transition-duration: .5s;
+            transition-delay: 0s;
+        }
+
+        .card:hover .background .tiles {
+            opacity: 1;
+            transition-delay: .25s;
+        }
+
+        .card:hover .background .tile {
+            animation-name: tile;
+        }
+
+        .card .background .tile.tile-4,
+        .card .background .tile.tile-6,
+        .card .background .tile.tile-10 {
+            animation-delay: -2s;
+        }
+
+        .card .background .tile.tile-3,
+        .card .background .tile.tile-5,
+        .card .background .tile.tile-8 {
+            animation-delay: -4s;
+        }
+
+        .card .background .tile.tile-2,
+        .card .background .tile.tile-9 {
+            animation-delay: -6s;
+        }
+    </style>
+</head>
+<body>
+    <div class="loader"></div>
+    <div id="main-content">
+        <header id="page-header">
+            <div class="logo"></div>
+            <nav>
+                <ul>
+                    <li><a href="#GitHub">GitHub</a></li>
+                    <li><a href="#Télécharger">Télécharger</a></li>
+                    <li><a href="#Documentation">Documentation</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div id="animation-section">
+            <div class="animation-container">
+                <div class="background-layer"></div>
+                <div class="foreground-layer"></div>
+                <div class="title-container">
+                    <div class="initial-text">COMMENT SURVIVRE<br>simulation</div>
+                </div>
+                <div class="description-container">
+                    <div class="description-text">
+                        NOTRE SIMULATION REPRODUIT AU MIEUX L’ÉCOSYSTÈME DE 10 ESPÈCES ANIMALES DANS LE TEMPS IMPARTI. CHAQUE ESPÈCE A SES PROPRES CARACTÉRISTIQUES : CERTAINES SONT DES PRÉDATEURS, D’AUTRES DES PROIES, ET D’AUTRES ENCORE SONT INOFFENSIVES. VOUS POUVEZ PERSONNALISER VOTRE SIMULATION EN CHOISISSANT LIBREMENT PARMI CES 10 ESPÈCES. VOUS POURREZ AUSSI INTERAGIR AVEC LES RESSOURCES DISPONIBLES DANS LES DIFFÉRENTS ENVIRONNEMENTS PROPOSÉS AU DÉBUT DE LA SIMULATION.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-wrapper">
+            <div class="bande"><a href="#GitHub" class="bande-text">GitHub</a></div>
+            <div class="bande"><a href="#Télécharger" class="bande-text">Télécharger</a></div>
+            <div class="bande"><a href="#Documentation" class="bande-text">Documentation</a></div>
+            <footer>
+                <p>UNE SIMULATION RÉALISÉE DANS LE CADRE DU COURS DE PROJET D'INTÉGRATION EN SCIENCES INFORMATIQUES ET MATHÉMATIQUES</p>
+            </footer>
+        </div>
+    </div>
+
+<div id="download-section">
+    <button class="back-button" onclick="document.getElementById('download-section').classList.remove('visible'); document.getElementById('main-content').style.display = 'block'; document.getElementById('animation-section').style.display = 'block';">
+        <svg height="16" width="16" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1024 1024">
+            <path fill="currentColor" d="M874.690416 495.52477c0 11.2973-9.168824 20.466124-20.466124 20.466124l-604.773963 0 188.083679 188.083679c7.992021 7.992021 7.992021 20.947078 0 28.939099-4.001127 3.990894-9.240455 5.996574-14.46955 5.996574-5.239328 0-10.478655-1.995447-14.479783-5.996574l-223.00912-223.00912c-3.837398-3.837398-5.996574-9.046027-5.996574-14.46955 0-5.433756 2.159176-10.632151 5.996574-14.46955l223.019353-223.029586c7.992021-7.992021 20.957311-7.992021 28.949332 0 7.992021 8.002254 7.992021 20.957311 0 28.949332l-188.073446 188.073446 604.753497 0C865.521592 475.058646 874.690416 484.217237 874.690416 495.52477z"></path>
+        </svg>
+        <span>Back</span>
+    </button>
+    <div class="grid">
+        <!-- Apple (macOS) -->
+        <div class="card" data-os="macos">
+            <span class="icon">
+                <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.152 6.896c-.948 0-2.415-1.068-3.96-1.068-2.004 0-3.84 1.404-4.824 3.732-1.404 3.828.504 9.024 4.092 12.012 2.016 1.488 4.392 1.488 6.408 0 1.98-1.488 3.396-3.792 3.396-7.128 0-1.404-.684-2.772-2.016-3.732-.792-.576-1.764-.9-2.772-.9zm5.604-2.664c0-.684-.504-1.26-1.152-1.404-.648-.144-1.404.216-1.764.792-.324.576-.468 1.26-.468 1.944 0 .684.18 1.332.504 1.836.432.684 1.224 1.116 2.016 1.116.684 0 1.368-.36 1.764-.936-.648-.576-1.152-1.404-1.152-2.088 0-.684.504-1.26 1.152-1.404.648-.144 1.404.216 1.764.792.324.576.468 1.26.468 1.944 0 .684-.18 1.332-.504 1.836-.432.684-1.224 1.116-2.016 1.116-.684 0-1.368-.36-1.764-.936z"/>
+                </svg>
+            </span>
+            <h4>MACOS</h4>
+            <p>TÉLÉCHARGEZ LA SIMULATION POUR MACOS.</p>
+            <div class="shine"></div>
+            <div class="background">
+                <div class="tiles">
+                    <div class="tile tile-1"></div><div class="tile tile-2"></div><div class="tile tile-3"></div><div class="tile tile-4"></div>
+                    <div class="tile tile-5"></div><div class="tile tile-6"></div><div class="tile tile-7"></div><div class="tile tile-8"></div>
+                    <div class="tile tile-9"></div><div class="tile tile-10"></div>
+                </div>
+            </div>
+        </div>
+        <!-- Windows -->
+        <div class="card" data-os="windows">
+            <span class="icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M0 93.7l183.6-25.3v177.4H0V93.7zm0 324.6l183.6 25.3V268.4H0v149.9zm203.8 28L448 480V268.4H203.8v177.9zm0-380.6v180.1H448V32L203.8 65.7z"/></svg>
+            </span>
+            <h4>WINDOWS</h4>
+            <p>TÉLÉCHARGEZ LA SIMULATION POUR WINDOWS.</p>
+            <div class="shine"></div>
+            <div class="background">
+                <div class="tiles">
+                    <div class="tile tile-1"></div><div class="tile tile-2"></div><div class="tile tile-3"></div><div class="tile tile-4"></div>
+                    <div class="tile tile-5"></div><div class="tile tile-6"></div><div class="tile tile-7"></div><div class="tile tile-8"></div>
+                    <div class="tile tile-9"></div><div class="tile tile-10"></div>
+                </div>
+            </div>
+        </div>
+        <!-- Linux -->
+        <div class="card" data-os="linux">
+            <span class="icon">
+                <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.5 2C4.46 2 2 4.46 2 7.5c0 1.66.73 3.14 1.88 4.16C2.73 13.14 2 14.84 2 16.5 2 19.54 4.46 22 7.5 22c1.66 0 3.16-.73 4.16-1.88C12.84 21.27 14.34 22 16 22c3.04 0 5.5-2.46 5.5-5.5 0-1.66-.73-3.16-1.88-4.16C20.27 11.14 21 9.66 21 8c0-3.04-2.46-5.5-5.5-5.5-1.66 0-3.14.73-4.16 1.88C10.14 2.73 8.66 2 7.5 2zm0 2c.83 0 1.5.67 1.5 1.5S8.33 7 7.5 7 6 6.33 6 5.5 6.67 4 7.5 4zm8.5 0c.83 0 1.5.67 1.5 1.5S16.83 7 16 7s-1.5-.67-1.5-1.5S15.17 4 16 4zM6 9h3v1H6V9zm9 0h3v1h-3V9zm-4.5 3c-1.93 0-3.5 1.57-3.5 3.5S8.57 19 10.5 19s3.5-1.57 3.5-3.5S12.43 12 10.5 12zm0 2c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5z"/>
+                </svg>
+            </span>
+            <h4>LINUX</h4>
+            <p>TÉLÉCHARGEZ LA SIMULATION POUR LINUX.</p>
+            <div class="shine"></div>
+            <div class="background">
+                <div class="tiles">
+                    <div class="tile tile-1"></div><div class="tile tile-2"></div><div class="tile tile-3"></div><div class="tile tile-4"></div>
+                    <div class="tile tile-5"></div><div class="tile tile-6"></div><div class="tile tile-7"></div><div class="tile tile-8"></div>
+                    <div class="tile tile-9"></div><div class="tile tile-10"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loader = document.querySelector('.loader');
+            const mainContent = document.getElementById('main-content');
+            const animationSection = document.getElementById('animation-section');
+            const contentWrapper = document.querySelector('.content-wrapper');
+            const downloadSection = document.getElementById('download-section');
+            const initialText = document.querySelector('.initial-text');
+            const descriptionText = document.querySelector('.description-text');
+            const backgroundLayer = document.querySelector('.background-layer');
+            const foregroundLayer = document.querySelector('.foreground-layer');
+            const bandes = document.querySelectorAll('.bande');
+            const header = document.getElementById('page-header');
+
+            setTimeout(() => {
+                loader.classList.add('hidden');
+                mainContent.style.display = 'block';
+                animationSection.style.display = 'block';
+            }, 2000);
+
+            animationSection.addEventListener('mousemove', (e) => {
+                const rect = animationSection.getBoundingClientRect();
+                const rotateY = ((e.clientX - rect.left - rect.width/2) / rect.width) * 20;
+                const rotateX = -((e.clientY - rect.top - rect.height/2) / rect.height) * 20;
+                initialText.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+
+            animationSection.addEventListener('mouseleave', () => {
+                initialText.style.transform = 'rotateX(0) rotateY(0)';
+            });
+
+            window.addEventListener('scroll', () => {
+                const scroll = window.scrollY;
+                const height = window.innerHeight;
+                const progress = scroll / height;
+
+                const scale = 1 + progress * 0.3;
+                backgroundLayer.style.transform = `scale(${Math.min(scale, 1.3)})`;
+                foregroundLayer.style.transform = `scale(${Math.min(scale, 1.3)})`;
+
+                if (progress >= 0.3 && progress < 0.7) {
+                    backgroundLayer.classList.add('darkened');
+                    foregroundLayer.classList.add('darkened');
+                } else {
+                    backgroundLayer.classList.remove('darkened');
+                    foregroundLayer.classList.remove('darkened');
+                }
+
+                if (progress < 0.3) {
+                    initialText.style.opacity = 1;
+                    descriptionText.style.opacity = 0;
+                    animationSection.style.display = 'block';
+                    contentWrapper.classList.remove('visible');
+                    header.classList.remove('hidden');
+                    bandes.forEach(bande => bande.classList.remove('visible'));
+                } else if (progress < 0.5) {
+                    initialText.style.opacity = 1 - (progress - 0.3) / 0.2;
+                    descriptionText.style.opacity = (progress - 0.3) / 0.2;
+                    animationSection.style.display = 'block';
+                    contentWrapper.classList.remove('visible');
+                    header.classList.remove('hidden');
+                    bandes.forEach(bande => bande.classList.remove('visible'));
+                } else if (progress < 0.7) {
+                    initialText.style.opacity = 0;
+                    descriptionText.style.opacity = 1;
+                    animationSection.style.display = 'block';
+                    contentWrapper.classList.remove('visible');
+                    header.classList.remove('hidden');
+                    bandes.forEach(bande => bande.classList.remove('visible'));
+                } else {
+                    animationSection.style.display = 'none';
+                    contentWrapper.classList.add('visible');
+                    header.classList.add('hidden');
+                    bandes.forEach((bande, i) => {
+                        setTimeout(() => bande.classList.add('visible'), i * 300);
+                    });
+                }
+
+                if (scroll > height) window.scrollTo(0, height);
+            });
+
+            document.querySelectorAll('a[href="#Télécharger"]').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    mainContent.style.display = 'none';
+                    downloadSection.classList.add('visible');
+                });
+            });
+
+            document.querySelectorAll('.card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const os = card.getAttribute('data-os');
+                    let downloadUrl;
+                    switch(os) {
+                        case 'macos': downloadUrl = 'lien_vers_macos'; break;
+                        case 'windows': downloadUrl = 'lien_vers_windows'; break;
+                        case 'linux': downloadUrl = 'lien_vers_linux'; break;
+                    }
+                    window.location.href = downloadUrl;
+                });
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && downloadSection.classList.contains('visible')) {
+                    downloadSection.classList.remove('visible');
+                    mainContent.style.display = 'block';
+                    animationSection.style.display = 'block';
+                }
+            });
+
+            ['Images/image8.png', 'Images/image9.png'].forEach(src => {
+                new Image().src = src;
+            });
+        });
+    </script>
+</body>
+</html>
